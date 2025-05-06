@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController.GET_VALIDATORS;
 import static org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController.GET_EPOCH_COUNTER;
+import static org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController.GET_VALIDATORS;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
@@ -77,16 +77,17 @@ public class ValidatorContractControllerTest {
             GET_VALIDATORS,
             List.of(),
             List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
-    final Bytes getValidatorsPayload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
-    getValidatorsCallParameter = new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, getValidatorsPayload);
+    final Bytes getValidatorsPayload =
+        Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
+    getValidatorsCallParameter =
+        new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, getValidatorsPayload);
 
     final Function getEpochCounterFunction =
-        new Function(
-            GET_EPOCH_COUNTER,
-            List.of(),
-            List.of(new TypeReference<Uint256>() {}));
-    final Bytes getEpochCounterPayload = Bytes.fromHexString(FunctionEncoder.encode(getEpochCounterFunction));
-    getEpochCounterCallParameter = new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, getEpochCounterPayload);
+        new Function(GET_EPOCH_COUNTER, List.of(), List.of(new TypeReference<Uint256>() {}));
+    final Bytes getEpochCounterPayload =
+        Bytes.fromHexString(FunctionEncoder.encode(getEpochCounterFunction));
+    getEpochCounterCallParameter =
+        new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, getEpochCounterPayload);
 
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
@@ -317,5 +318,4 @@ public class ValidatorContractControllerTest {
             () -> validatorContractController.getEpochCounter(1, CONTRACT_ADDRESS))
         .hasMessage("Unexpected empty result from epoch counter smart contract call");
   }
-
 }

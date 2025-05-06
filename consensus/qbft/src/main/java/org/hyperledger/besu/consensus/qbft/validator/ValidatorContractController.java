@@ -50,17 +50,21 @@ public class ValidatorContractController {
   public static final String EPOCH_COUNTER_ERROR_MSG = "Failed epoch counter smart contract call";
 
   /** The constant UNEXPECTED_FUNCTION_ERROR_MSG. */
-  public static final String UNEXPECTED_FUNCTION_ERROR_MSG = "Failed smart contract call - Unexpected function";
+  public static final String UNEXPECTED_FUNCTION_ERROR_MSG =
+      "Failed smart contract call - Unexpected function";
 
   /** The constant UNEXPECTED_RESULT_VALIDATOR_ERROR_MSG. */
-  public static final String UNEXPECTED_RESULT_VALIDATOR_ERROR_MSG = "Unexpected empty result from validator smart contract call";
+  public static final String UNEXPECTED_RESULT_VALIDATOR_ERROR_MSG =
+      "Unexpected empty result from validator smart contract call";
 
   /** The constant UNEXPECTED_RESULT_EPOCH_ERROR_MSG. */
-  public static final String UNEXPECTED_RESULT_EPOCH_ERROR_MSG = "Unexpected empty result from epoch counter smart contract call";
+  public static final String UNEXPECTED_RESULT_EPOCH_ERROR_MSG =
+      "Unexpected empty result from epoch counter smart contract call";
 
   private final TransactionSimulator transactionSimulator;
   private final Function getValidatorsFunction;
   private final Function getEpochCounterFunction;
+
   /**
    * Instantiates a new Validator contract controller.
    *
@@ -77,10 +81,7 @@ public class ValidatorContractController {
               List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
 
       this.getEpochCounterFunction =
-          new Function(
-              GET_EPOCH_COUNTER,
-              List.of(),
-              List.of(new TypeReference<Uint256>() {}));
+          new Function(GET_EPOCH_COUNTER, List.of(), List.of(new TypeReference<Uint256>() {}));
     } catch (final Exception e) {
       throw new RuntimeException("Error creating smart contract functions", e);
     }
@@ -139,7 +140,6 @@ public class ValidatorContractController {
         callParams, transactionValidationParams, OperationTracer.NO_TRACING, blockNumber);
   }
 
-
   @SuppressWarnings("rawtypes")
   private List<Type> decodeResult(
       final TransactionSimulatorResult result, final Function function) {
@@ -156,7 +156,8 @@ public class ValidatorContractController {
   }
 
   @SuppressWarnings("rawtypes")
-  private List<Type> decodeGetEpochCounterResult(final TransactionSimulatorResult result, final Function function) {
+  private List<Type> decodeGetEpochCounterResult(
+      final TransactionSimulatorResult result, final Function function) {
     if (!result.isSuccessful()) {
       throw new IllegalStateException(EPOCH_COUNTER_ERROR_MSG);
     }
@@ -173,7 +174,8 @@ public class ValidatorContractController {
   }
 
   @SuppressWarnings("rawtypes")
-  private List<Type> decodeGetValidatorsResult(final TransactionSimulatorResult result, final Function function) {
+  private List<Type> decodeGetValidatorsResult(
+      final TransactionSimulatorResult result, final Function function) {
     if (!result.isSuccessful()) {
       throw new IllegalStateException(CONTRACT_ERROR_MSG);
     }
