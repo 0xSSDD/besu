@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -45,10 +46,13 @@ import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.generated.Uint256;
 
 public class ValidatorContractControllerTest {
   private static final String GET_VALIDATORS_FUNCTION_RESULT =
       "00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000eac51e3fe1afc9894f0dfeab8ceb471899b932df";
+//   private static final String GET_EPOCH_COUNTER_FUNCTION_RESULT =
+//       "0x0000000000000000000000000000000000000000000000000000000000000001";
   private static final Address VALIDATOR_ADDRESS =
       Address.fromHexString("0xeac51e3fe1afc9894f0dfeab8ceb471899b932df");
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("1");
@@ -62,7 +66,7 @@ public class ValidatorContractControllerTest {
       Mockito.mock(TransactionSimulator.class);
 
   private final Transaction transaction = Mockito.mock(Transaction.class);
-  private CallParameter callParameter;
+  private CallParameter getValidatorsCallParameter;
 
   @BeforeEach
   public void setup() {
@@ -71,8 +75,9 @@ public class ValidatorContractControllerTest {
             GET_VALIDATORS,
             List.of(),
             List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
-    final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
-    callParameter = new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, payload);
+    final Bytes getValidatorsPayload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
+    getValidatorsCallParameter = new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, getValidatorsPayload);
+
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     qbftConfigOptions.setValidatorContractAddress(Optional.of(CONTRACT_ADDRESS.toHexString()));
@@ -91,7 +96,7 @@ public class ValidatorContractControllerTest {
                 ValidationResult.valid()));
 
     when(transactionSimulator.process(
-            callParameter,
+            getValidatorsCallParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
             1))
@@ -113,7 +118,7 @@ public class ValidatorContractControllerTest {
                 ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR)));
 
     when(transactionSimulator.process(
-            callParameter,
+            getValidatorsCallParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
             1))
@@ -139,7 +144,7 @@ public class ValidatorContractControllerTest {
                 Optional.empty()));
 
     when(transactionSimulator.process(
-            callParameter,
+            getValidatorsCallParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
             1))
@@ -161,7 +166,7 @@ public class ValidatorContractControllerTest {
                 List.of(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
     when(transactionSimulator.process(
-            callParameter,
+            getValidatorsCallParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
             1))
@@ -178,7 +183,7 @@ public class ValidatorContractControllerTest {
   @Test
   public void throwErrorIfEmptySimulationResult() {
     when(transactionSimulator.process(
-            callParameter,
+            getValidatorsCallParameter,
             ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
             OperationTracer.NO_TRACING,
             1))
