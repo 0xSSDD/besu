@@ -33,18 +33,31 @@ import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.generated.Uint256;
 
 /** The Validator contract controller. */
 public class ValidatorContractController {
   /** The constant GET_VALIDATORS. */
   public static final String GET_VALIDATORS = "getValidators";
 
+  /** The constant GET_EPOCH_COUNTER. */
+  public static final String GET_EPOCH_COUNTER = "getEpochCounter";
+
   /** The constant CONTRACT_ERROR_MSG. */
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
 
+  /** The constant EPOCH_COUNTER_ERROR_MSG. */
+  public static final String EPOCH_COUNTER_ERROR_MSG = "Failed epoch counter smart contract call";
+
+  /** The constant UNEXPECTED_FUNCTION_ERROR_MSG. */
+  public static final String UNEXPECTED_FUNCTION_ERROR_MSG = "Failed smart contract call - Unexpected function";
+
+  /** The constant UNEXPECTED_RESULT_ERROR_MSG. */
+  public static final String UNEXPECTED_RESULT_ERROR_MSG = "Unexpected empty result from validator smart contract call";
+
   private final TransactionSimulator transactionSimulator;
   private final Function getValidatorsFunction;
-
+  private final Function getEpochCounterFunction;
   /**
    * Instantiates a new Validator contract controller.
    *
@@ -59,9 +72,28 @@ public class ValidatorContractController {
               GET_VALIDATORS,
               List.of(),
               List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
+
+      this.getEpochCounterFunction =
+          new Function(
+              GET_EPOCH_COUNTER,
+              List.of(),
+              List.of(new TypeReference<Uint256>() {}));
     } catch (final Exception e) {
-      throw new RuntimeException("Error creating smart contract function", e);
+      throw new RuntimeException("Error creating smart contract functions", e);
     }
+  }
+
+  /**
+   * Gets epoch counter.
+   *
+   * @param blockNumber the block number
+   * @param contractAddress the contract address
+   * @return the epoch counter
+   */
+  public Uint256 getEpochCounter(final long blockNumber, final Address contractAddress) {
+    return callFunction(blockNumber, getEpochCounterFunction, contractAddress)
+        .map(this::parseGetEpochCounterResult)
+        .orElseThrow(() -> new IllegalStateException(EPOCH_COUNTER_ERROR_MSG));
   }
 
   /**
@@ -75,6 +107,12 @@ public class ValidatorContractController {
     return callFunction(blockNumber, getValidatorsFunction, contractAddress)
         .map(this::parseGetValidatorsResult)
         .orElseThrow(() -> new IllegalStateException(CONTRACT_ERROR_MSG));
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private Uint256 parseGetEpochCounterResult(final TransactionSimulatorResult result) {
+    final List<Type> resultDecoding = decodeResult(result, getEpochCounterFunction);
+    return (Uint256) resultDecoding.get(0);
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -98,23 +136,53 @@ public class ValidatorContractController {
         callParams, transactionValidationParams, OperationTracer.NO_TRACING, blockNumber);
   }
 
+
   @SuppressWarnings("rawtypes")
   private List<Type> decodeResult(
       final TransactionSimulatorResult result, final Function function) {
-    if (result.isSuccessful()) {
-      final List<Type> decodedList =
-          FunctionReturnDecoder.decode(
-              result.result().getOutput().toHexString(), function.getOutputParameters());
+    final String functionName = function.getName();
 
-      if (decodedList.isEmpty()) {
-        throw new IllegalStateException(
-            "Unexpected empty result from validator smart contract call");
-      }
-
-      return decodedList;
-    } else {
-      throw new IllegalStateException(
-          "Failed validator smart contract call: " + result.getValidationResult());
+    switch (functionName) {
+      case GET_EPOCH_COUNTER:
+        return decodeGetEpochCounterResult(result, function);
+      case GET_VALIDATORS:
+        return decodeGetValidatorsResult(result, function);
+      default:
+        throw new IllegalStateException(UNEXPECTED_FUNCTION_ERROR_MSG + ": " + functionName);
     }
+  }
+
+  @SuppressWarnings("rawtypes")
+  private List<Type> decodeGetEpochCounterResult(final TransactionSimulatorResult result, final Function function) {
+    if (!result.isSuccessful()) {
+      throw new IllegalStateException(EPOCH_COUNTER_ERROR_MSG);
+    }
+    final List<Type> decodedList =
+        FunctionReturnDecoder.decode(
+            result.result().getOutput().toHexString(), function.getOutputParameters());
+    if (decodedList.isEmpty()) {
+      throw new IllegalStateException(UNEXPECTED_RESULT_ERROR_MSG);
+    }
+    if (!(decodedList.get(0) instanceof org.web3j.abi.datatypes.generated.Uint256)) {
+      throw new IllegalStateException(EPOCH_COUNTER_ERROR_MSG);
+    }
+    return decodedList;
+  }
+
+  @SuppressWarnings("rawtypes")
+  private List<Type> decodeGetValidatorsResult(final TransactionSimulatorResult result, final Function function) {
+    if (!result.isSuccessful()) {
+      throw new IllegalStateException(CONTRACT_ERROR_MSG);
+    }
+    final List<Type> decodedList =
+        FunctionReturnDecoder.decode(
+            result.result().getOutput().toHexString(), function.getOutputParameters());
+    if (decodedList.isEmpty()) {
+      throw new IllegalStateException(UNEXPECTED_RESULT_ERROR_MSG);
+    }
+    if (!(decodedList.get(0) instanceof org.web3j.abi.datatypes.DynamicArray)) {
+      throw new IllegalStateException(CONTRACT_ERROR_MSG);
+    }
+    return decodedList;
   }
 }
