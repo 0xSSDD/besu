@@ -167,6 +167,28 @@ public class ValidatorContractControllerTest {
   }
 
   @Test
+  public void throwErrorIfInvalidEpochCounterSimulationResult() {
+    final TransactionSimulatorResult result =
+        new TransactionSimulatorResult(
+            transaction,
+            TransactionProcessingResult.invalid(
+                ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR)));
+
+    when(transactionSimulator.process(
+            getEpochCounterCallParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
+
+    final ValidatorContractController validatorContractController =
+        new ValidatorContractController(transactionSimulator);
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getEpochCounter(1, CONTRACT_ADDRESS))
+        .hasMessageContaining("Failed epoch counter smart contract call");
+  }
+
+  @Test
   public void throwErrorIfFailedSimulationResult() {
     final TransactionSimulatorResult result =
         new TransactionSimulatorResult(
@@ -190,6 +212,32 @@ public class ValidatorContractControllerTest {
     Assertions.assertThatThrownBy(
             () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessageContaining("Failed validator smart contract call");
+  }
+
+  @Test
+  public void throwErrorIfFailedEpochCounterSimulationResult() {
+    final TransactionSimulatorResult result =
+        new TransactionSimulatorResult(
+            transaction,
+            TransactionProcessingResult.failed(
+                0,
+                0,
+                ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR),
+                Optional.empty(),
+                Optional.empty()));
+
+    when(transactionSimulator.process(
+            getEpochCounterCallParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
+
+    final ValidatorContractController validatorContractController =
+        new ValidatorContractController(transactionSimulator);
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getEpochCounter(1, CONTRACT_ADDRESS))
+        .hasMessageContaining("Failed epoch counter smart contract call");
   }
 
   @Test
@@ -230,4 +278,44 @@ public class ValidatorContractControllerTest {
             () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessage("Failed validator smart contract call");
   }
+
+  @Test
+  public void throwErrorIfEmptyEpochCounterSimulationResult() {
+    when(transactionSimulator.process(
+            getEpochCounterCallParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.empty());
+
+    final ValidatorContractController validatorContractController =
+        new ValidatorContractController(transactionSimulator);
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getEpochCounter(1, CONTRACT_ADDRESS))
+        .hasMessage("Failed epoch counter smart contract call");
+  }
+
+  @Test
+  public void throwErrorIfUnexpectedSuccessfulEmptyEpochCounterSimulationResult() {
+    final TransactionSimulatorResult result =
+        new TransactionSimulatorResult(
+            transaction,
+            TransactionProcessingResult.successful(
+                List.of(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+
+    when(transactionSimulator.process(
+            getEpochCounterCallParameter,
+            ALLOW_EXCEEDING_BALANCE_VALIDATION_PARAMS,
+            OperationTracer.NO_TRACING,
+            1))
+        .thenReturn(Optional.of(result));
+
+    final ValidatorContractController validatorContractController =
+        new ValidatorContractController(transactionSimulator);
+
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getEpochCounter(1, CONTRACT_ADDRESS))
+        .hasMessage("Unexpected empty result from epoch counter smart contract call");
+  }
+
 }

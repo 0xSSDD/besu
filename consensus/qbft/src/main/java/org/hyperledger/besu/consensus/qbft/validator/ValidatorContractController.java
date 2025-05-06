@@ -52,8 +52,11 @@ public class ValidatorContractController {
   /** The constant UNEXPECTED_FUNCTION_ERROR_MSG. */
   public static final String UNEXPECTED_FUNCTION_ERROR_MSG = "Failed smart contract call - Unexpected function";
 
-  /** The constant UNEXPECTED_RESULT_ERROR_MSG. */
-  public static final String UNEXPECTED_RESULT_ERROR_MSG = "Unexpected empty result from validator smart contract call";
+  /** The constant UNEXPECTED_RESULT_VALIDATOR_ERROR_MSG. */
+  public static final String UNEXPECTED_RESULT_VALIDATOR_ERROR_MSG = "Unexpected empty result from validator smart contract call";
+
+  /** The constant UNEXPECTED_RESULT_EPOCH_ERROR_MSG. */
+  public static final String UNEXPECTED_RESULT_EPOCH_ERROR_MSG = "Unexpected empty result from epoch counter smart contract call";
 
   private final TransactionSimulator transactionSimulator;
   private final Function getValidatorsFunction;
@@ -161,7 +164,7 @@ public class ValidatorContractController {
         FunctionReturnDecoder.decode(
             result.result().getOutput().toHexString(), function.getOutputParameters());
     if (decodedList.isEmpty()) {
-      throw new IllegalStateException(UNEXPECTED_RESULT_ERROR_MSG);
+      throw new IllegalStateException(UNEXPECTED_RESULT_EPOCH_ERROR_MSG);
     }
     if (!(decodedList.get(0) instanceof org.web3j.abi.datatypes.generated.Uint256)) {
       throw new IllegalStateException(EPOCH_COUNTER_ERROR_MSG);
@@ -178,7 +181,7 @@ public class ValidatorContractController {
         FunctionReturnDecoder.decode(
             result.result().getOutput().toHexString(), function.getOutputParameters());
     if (decodedList.isEmpty()) {
-      throw new IllegalStateException(UNEXPECTED_RESULT_ERROR_MSG);
+      throw new IllegalStateException(UNEXPECTED_RESULT_VALIDATOR_ERROR_MSG);
     }
     if (!(decodedList.get(0) instanceof org.web3j.abi.datatypes.DynamicArray)) {
       throw new IllegalStateException(CONTRACT_ERROR_MSG);
